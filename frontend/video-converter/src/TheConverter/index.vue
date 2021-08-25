@@ -5,6 +5,7 @@
     <form enctype="multipart/form-data" @submit.prevent>
       <input type="file" id="file"  ref="file" @change="onSelect">
     <base-button @click="uploadFile" mode="filledBtn" >Wyślij</base-button>
+    <base-button @click="convertFile" mode="greenBtn" >Konwertuj</base-button>
     </form>
   </div>
 </template>
@@ -42,7 +43,13 @@ export default {
         console.log(error)
       }
 
-    }
+    },
+    async convertFile(){
+      await fetch('http://localhost:3000/convert', {
+        method: 'GET',
+        credentials: 'include',
+      }
+    )} 
   }
 }
 </script>
