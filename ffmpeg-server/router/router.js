@@ -1,5 +1,7 @@
 const router = require('express').Router();
-const path = require('path');
+const createError = require('http-errors');
+const fs = require('fs');
+const fg = require('fast-glob');
 const upload = require('../helpers/fileUploader').uploadFile()
 
 
@@ -12,9 +14,17 @@ router.post('/uploadFile', upload.single('file'), (req, res) => {
 });
 
 router.get('/download', (req, res) => {
-  const file = `/app/convertedData/iwo1.avi`;
+  const fileName = fg.sync(`./convertedData/*`, {onlyFiles: true, cwd: '', deep: 1})[0];
+  console.log(fileName)
+  const file = `/app/${fileName}`;
   res.setHeader('Content-Length', file.length);
-  res.download(file)
+  res.download(file, (err) => {
+    if(err) return;
+    fs.unlink(`/app/${fileName}`, (err, file) => {
+      if(!err) console.log('Deleted');
+      createError.InternalServerError(err);
+    })
+  })
 })
 
 module.exports = router;
