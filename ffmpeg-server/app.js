@@ -3,15 +3,18 @@ const createError = require('http-errors');
 const fs = require('fs');
 const path = require('path');
 const ffmpeg = require('fluent-ffmpeg');
+const fg = require('fast-glob');
 const morgan = require('morgan');
 const cors = require('cors');
 const config = require('./config');
 
+
 const app = express();
 app.use(express.json());
+app.use(express.urlencoded({extended: false}))
 app.use(cors());
 app.use(morgan('dev'));
-app.use('/files', express.static(path.join(__dirname, 'files')));
+app.use('/convertedData', express.static(path.join(__dirname, 'convertedData')));
 
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', 'http://localhost:8080');
@@ -24,25 +27,30 @@ app.use((req, res, next) => {
 const router = require('./router/router');
 app.use(router);
 
-const fileName = 'iwo1';
 
-app.get('/convert', (req, res, next) => {
+app.get('/convert', async (req, res, next) => {
+  const fileName = fg.sync(`./receivedData/toConvert-*`, {onlyFiles: true, cwd: '', deep: 1})[0].substring(`./receivedData/toConvert-`.length);
+  const name = path.parse(fileName).name;
+  const extname = path.parse(fileName).ext;
+  const newFormatExtension = 'avi';
   try{
-      const command = ffmpeg(path.join(`${__dirname}/receivedData/${fileName}.mp4`))
+    ffmpeg(path.join(`${__dirname}/receivedData/toConvert-${name}${extname}`))
       .videoBitrate('1000k', true)
       .size('?x1080')
       .aspect('16:9')
       .autopad('black')
-      .output(path.join(`${__dirname}/convertedData/${fileName}.avi`))
+      .output(path.join(`${__dirname}/convertedData/${name}.${newFormatExtension}`))
+      .on('end', () =>{
+        fs.unlink(path.join(`${__dirname}/receivedData/toConvert-${name}${extname}`), (err, file) => {
+          if(!err) console.log('Deleted');
+          createError.InternalServerError(err);
+        })
+      })
       .run();
-      res.status(200).json({message: 'Converted'})
-    // .download(path.join(`${__dirname}/convertedData/${fileName}.avi`));
   }catch (error){
     next(createError.InternalServerError(error));
   }
 })
-
-
 
 app.use((req, res) => {
   res.status(404).json({message: 'This route does not exist'});

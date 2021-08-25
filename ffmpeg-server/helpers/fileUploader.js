@@ -6,12 +6,12 @@ const fileStorage = multer.diskStorage({
       cb(null, 'receivedData');
   },
   filename: (req, file, cb) => {
-      cb(null, uuidv4() + '-' + file.originalname);
+      cb(null, `toConvert-${file.originalname}`);
   }
 });
 
 function uploadFile(){
-  const upload = multer({dest: './receivedData', storage: fileStorage});
+  const upload = multer({storage: fileStorage});
   return upload;
 }
 

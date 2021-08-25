@@ -1,4 +1,4 @@
-FROM node:alpine
+FROM node:14.17-alpine
 RUN apk add ffmpeg
 WORKDIR /app
 COPY package*.json .

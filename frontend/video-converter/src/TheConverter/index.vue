@@ -4,9 +4,14 @@
     <h4>{{response}}</h4>
     <form enctype="multipart/form-data" @submit.prevent>
       <input type="file" id="file"  ref="file" @change="onSelect">
-    <base-button @click="uploadFile" mode="filledBtn" >Wyślij</base-button>
-    <base-button @click="convertFile" mode="greenBtn" >Konwertuj</base-button>
+      <div class="buttons">
+        <base-button @click="uploadFile" mode="filledBtn" >Wyślij</base-button>
+        <base-button @click="convertFile" mode="greenBtn" >Konwertuj</base-button>
+        <base-button @click="downloadConvertedFile" mode="greenBtn" >Pobierz</base-button>
+      </div>
     </form>
+    <p v-if="url"><a :href="url">download video</a></p>
+    <p>{{text}}</p>
   </div>
 </template>
 
@@ -19,7 +24,9 @@ export default {
   data(){
     return{
       response: null,
-      file: ""
+      file: "",
+      url: null,
+      text: null
     }
   },
   methods: {
@@ -49,7 +56,19 @@ export default {
         method: 'GET',
         credentials: 'include',
       }
-    )} 
+    )},
+    async downloadConvertedFile(){
+      const response = await fetch('http://localhost:3000/download', {
+        method: 'GET',
+        credentials: 'include',
+      })
+      if(!response.ok) return;
+      const blob = await response.blob();
+      this.url =URL.createObjectURL(blob);
+      open(this.url)
+      // window.location.href = url
+
+    }
   }
 }
 </script>
@@ -62,5 +81,13 @@ export default {
     display: flex;
     justify-content: center;
     align-items: center;
+    flex-direction: column;
+  }
+
+  form{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
   }
 </style>
